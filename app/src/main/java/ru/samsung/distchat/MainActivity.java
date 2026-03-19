@@ -37,9 +37,9 @@ public class MainActivity extends AppCompatActivity {
     Handler handler;
     Runnable runnable;
 
-    ArrayAdapter<String> adapter;
-    boolean flagScrollDown = true;
+    boolean isScrollDown = true;
     int savedPosition = -1;
+    ArrayAdapter<String> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,26 +68,29 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 //getFromInternetDB();
                 String message = editMessage.getText().toString();
-                if(!message.isEmpty()) sendToInternetDB(message);
-                showData();
+                if(!message.isEmpty()) {
+                    sendToInternetDB(message);
+                    showData();
+                    editMessage.setText("");
+                    isScrollDown = true;
+                }
             }
         });
 
         listMessages.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-                if (scrollState == SCROLL_STATE_IDLE) {
-                    int lastVisiblePosition = listMessages.getLastVisiblePosition();
-                    int totalItems = adapter.getCount();
-                    flagScrollDown = (lastVisiblePosition == totalItems - 1);
-                    savedPosition = listMessages.getFirstVisiblePosition();
-                }
+            public void onScroll(AbsListView absListView, int i, int i1, int i2) {
+
             }
 
             @Override
-            public void onScroll(AbsListView view, int firstVisibleItem,
-                                 int visibleItemCount, int totalItemCount) {
-                // Не требуется
+            public void onScrollStateChanged(AbsListView absListView, int i) {
+                if(i == SCROLL_STATE_IDLE) {
+                    savedPosition = listMessages.getFirstVisiblePosition();
+                    if(adapter != null) {
+                        isScrollDown = listMessages.getLastVisiblePosition() == adapter.getCount() - 1;
+                    }
+                }
             }
         });
 
@@ -122,7 +125,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<DataFromDB>> call, Response<List<DataFromDB>> response) {
                 db = response.body();
-                flagScrollDown = true;
             }
 
             @Override
@@ -135,11 +137,11 @@ public class MainActivity extends AppCompatActivity {
     private void showData(){
         List<String> data = new ArrayList<>();
         for(DataFromDB a: db){
-            data.add(a.id+" "+a.name+" "+a.message+" "+a.created_at);
+            data.add(a.name+"   \t   \t   \t   "+a.created_at+"\n"+a.message+"\n");
         }
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
         listMessages.setAdapter(adapter);
-        if (flagScrollDown) {
+        if(isScrollDown) {
             listMessages.setSelection(adapter.getCount() - 1);
         } else {
             listMessages.setSelection(savedPosition);
