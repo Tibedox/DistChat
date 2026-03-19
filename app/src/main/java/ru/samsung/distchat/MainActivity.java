@@ -3,6 +3,7 @@ package ru.samsung.distchat;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -36,6 +37,10 @@ public class MainActivity extends AppCompatActivity {
     Handler handler;
     Runnable runnable;
 
+    ArrayAdapter<String> adapter;
+    boolean flagScrollDown = true;
+    int savedPosition = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,6 +70,24 @@ public class MainActivity extends AppCompatActivity {
                 String message = editMessage.getText().toString();
                 if(!message.isEmpty()) sendToInternetDB(message);
                 showData();
+            }
+        });
+
+        listMessages.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState == SCROLL_STATE_IDLE) {
+                    int lastVisiblePosition = listMessages.getLastVisiblePosition();
+                    int totalItems = adapter.getCount();
+                    flagScrollDown = (lastVisiblePosition == totalItems - 1);
+                    savedPosition = listMessages.getFirstVisiblePosition();
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem,
+                                 int visibleItemCount, int totalItemCount) {
+                // Не требуется
             }
         });
 
@@ -99,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<DataFromDB>> call, Response<List<DataFromDB>> response) {
                 db = response.body();
+                flagScrollDown = true;
             }
 
             @Override
@@ -113,8 +137,12 @@ public class MainActivity extends AppCompatActivity {
         for(DataFromDB a: db){
             data.add(a.id+" "+a.name+" "+a.message+" "+a.created_at);
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
         listMessages.setAdapter(adapter);
-        listMessages.setSelection(listMessages.getAdapter().getCount() - 1);
+        if (flagScrollDown) {
+            listMessages.setSelection(adapter.getCount() - 1);
+        } else {
+            listMessages.setSelection(savedPosition);
+        }
     }
 }
