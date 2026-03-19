@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
     private void showData(){
         List<String> data = new ArrayList<>();
         for(DataFromDB a: db){
-            data.add(a.name+"   \t   \t   \t   "+a.created_at+"\n"+a.message+"\n");
+            data.add(a.name+"    \t   \t   \t   "+a.created_at+"\n"+a.message+"\n");
         }
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
         listMessages.setAdapter(adapter);
